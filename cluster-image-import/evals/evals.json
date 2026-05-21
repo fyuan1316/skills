@@ -1,0 +1,25 @@
+{
+  "skill_name": "cluster-image-import",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "把 build-harbor.alauda.cn/mlops/vllm-server:v0.20.2-rc.7.g077e559-cu130 导入到集群 registry 192.168.136.182:11443。",
+      "expected_output": "经跳板机 SSH 到 146，部署 push-image.sh 并以 amd64(默认) 平台执行，把镜像 push 到 192.168.136.182:11443，报告成功。"
+    },
+    {
+      "id": 2,
+      "prompt": "同一个镜像，这次集群是 arm64 的，目标仓库 10.0.0.5:5000，帮我推过去。",
+      "expected_output": "以 platform=arm64 调用 import_image.sh，目标 registry 为 10.0.0.5:5000。"
+    },
+    {
+      "id": 3,
+      "prompt": "这个镜像要做成多架构的，amd64 和 arm64 都要，推到 192.168.136.182:11443。",
+      "expected_output": "platform=arm64,amd64，pushimages.sh 走异构分支生成多架构 manifest。"
+    },
+    {
+      "id": 4,
+      "prompt": "我现在在 devpod 里，没有跳板机私钥，直接跑导入会怎样？",
+      "expected_output": "脚本检测到 JUMPER_KEY 私钥缺失，非 0 退出并提示把私钥放到 ~/.ssh/fy-qq-jumper.pem 或用 JUMPER_KEY= 覆盖，而不是盲目尝试连接。"
+    }
+  ]
+}
