@@ -1,0 +1,234 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ "${DEBUG:-false}" == "true" ]]; then
+  set -x
+fi
+
+usage() {
+  cat <<'EOF'
+Usage:
+  sync-bundle <artifact> [profile]
+
+Examples:
+  sync-bundle charts/model-catalog
+  sync-bundle build-harbor.alauda.cn/foo/bar:baz test
+
+Config files:
+  ~/.config/violet-sync/config.env
+  ~/.config/violet-sync/<profile>.env
+EOF
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+ARTIFACT="${1:-}"
+PROFILE="${2:-}"
+
+if [[ -z "${ARTIFACT}" ]]; then
+  usage
+  exit 1
+fi
+
+CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}/violet-sync"
+CACHE_HOME="${XDG_CACHE_HOME:-${HOME}/.cache}/violet-sync"
+DEFAULT_CONFIG="${CONFIG_HOME}/config.env"
+PROFILE_CONFIG=""
+
+if [[ -n "${PROFILE}" ]]; then
+  PROFILE_CONFIG="${CONFIG_HOME}/${PROFILE}.env"
+fi
+
+load_config() {
+  local path="$1"
+  if [[ -f "${path}" ]]; then
+    # shellcheck disable=SC1090
+    source "${path}"
+  fi
+}
+
+load_config "${DEFAULT_CONFIG}"
+if [[ -n "${PROFILE_CONFIG}" ]]; then
+  load_config "${PROFILE_CONFIG}"
+fi
+
+SKIP_PACKAGE_IMAGES="${SKIP_PACKAGE_IMAGES:-true}"
+PACKAGE_PLATFORMS="${PACKAGE_PLATFORMS:-dual}"
+CLUSTERS="${CLUSTERS:-global}"
+ACP_NAMESPACE="${ACP_NAMESPACE:-idp}"
+VIOLET_VERSION="${VIOLET_VERSION:-latest}"
+VIOLET_BASE_URL="${VIOLET_BASE_URL:-http://package-minio.alauda.cn:9199/packages/violet}"
+VIOLET_BIN="${VIOLET_BIN:-${CACHE_HOME}/violet}"
+
+require_cmd() {
+  local cmd="$1"
+  if ! command -v "${cmd}" >/dev/null 2>&1; then
+    echo "required command not found: ${cmd}" >&2
+    exit 1
+  fi
+}
+
+log() {
+  printf '[sync-bundle] %s\n' "$*"
+}
+
+discover_platform_address() {
+  if [[ -n "${PLATFORM_ADDRESS:-}" ]]; then
+    printf '%s\n' "${PLATFORM_ADDRESS}"
+    return 0
+  fi
+
+  require_cmd kubectl
+
+  local addr=""
+  addr="$(kubectl get productbases base -o jsonpath='{.spec.platformURL}' 2>/dev/null || true)"
+  if [[ -n "${addr}" ]]; then
+    printf '%s\n' "${addr}"
+    return 0
+  fi
+
+  if [[ -n "${ACP_NAME:-}" ]]; then
+    addr="$(
+      kubectl get acpstdacps.env.idp.alauda.io \
+        -n "${ACP_NAMESPACE}" \
+        "${ACP_NAME}" \
+        -o jsonpath='{.spec.platformURL}' 2>/dev/null || true
+    )"
+    if [[ -n "${addr}" ]]; then
+      printf '%s\n' "${addr}"
+      return 0
+    fi
+  fi
+
+  echo "failed to discover PLATFORM_ADDRESS; set it in ${DEFAULT_CONFIG}" >&2
+  return 1
+}
+
+ensure_violet() {
+  if [[ -x "${VIOLET_BIN}" ]] && "${VIOLET_BIN}" version >/dev/null 2>&1; then
+    printf '%s\n' "${VIOLET_BIN}"
+    return 0
+  fi
+
+  require_cmd curl
+  mkdir -p "${CACHE_HOME}"
+
+  local os=""
+  local arch=""
+
+  case "$(uname -s)" in
+    Darwin) os="darwin" ;;
+    Linux) os="linux" ;;
+    *)
+      echo "unsupported OS: $(uname -s)" >&2
+      exit 1
+      ;;
+  esac
+
+  case "$(uname -m)" in
+    amd64|x86_64) arch="amd64" ;;
+    arm64|aarch64) arch="arm64" ;;
+    *)
+      echo "unsupported arch: $(uname -m)" >&2
+      exit 1
+      ;;
+  esac
+
+  local tmp_bin="${VIOLET_BIN}.tmp.$$"
+  local url="${VIOLET_BASE_URL}/${VIOLET_VERSION}/violet_${os}_${arch}"
+  curl -fsSL -o "${tmp_bin}" "${url}"
+  chmod +x "${tmp_bin}"
+  mv "${tmp_bin}" "${VIOLET_BIN}"
+
+  printf '%s\n' "${VIOLET_BIN}"
+}
+
+rewrite_artifact_if_needed() {
+  local artifact="$1"
+  if [[ -n "${REGISTRY_REWRITE_FROM:-}" && -n "${REGISTRY_REWRITE_TO:-}" && "${artifact}" == "${REGISTRY_REWRITE_FROM}"* ]]; then
+    printf '%s\n' "${REGISTRY_REWRITE_TO}${artifact#${REGISTRY_REWRITE_FROM}}"
+    return 0
+  fi
+
+  printf '%s\n' "${artifact}"
+}
+
+if [[ -z "${PLATFORM_USERNAME:-}" || -z "${PLATFORM_PASSWORD:-}" ]]; then
+  echo "PLATFORM_USERNAME and PLATFORM_PASSWORD are required; configure them in ${DEFAULT_CONFIG}" >&2
+  exit 1
+fi
+
+PLATFORM_ADDRESS="$(discover_platform_address)"
+VIOLET="$(ensure_violet)"
+ORIGINAL_ARTIFACT="${ARTIFACT}"
+ARTIFACT="$(rewrite_artifact_if_needed "${ARTIFACT}")"
+
+log "profile=${PROFILE:-default}"
+log "artifact=${ORIGINAL_ARTIFACT}"
+if [[ "${ARTIFACT}" != "${ORIGINAL_ARTIFACT}" ]]; then
+  log "rewritten-artifact=${ARTIFACT}"
+fi
+log "platform-address=${PLATFORM_ADDRESS}"
+log "clusters=${CLUSTERS}"
+log "package-platforms=${PACKAGE_PLATFORMS}"
+log "skip-package-images=${SKIP_PACKAGE_IMAGES}"
+
+TMP_DIR="$(mktemp -d)"
+cleanup() {
+  rm -rf "${TMP_DIR}"
+}
+trap cleanup EXIT
+
+OUTPUT_DIR="${TMP_DIR}/output"
+OUTPUT_FILE="${TMP_DIR}/output.tgz"
+
+DEBUG_ARGS=()
+if [[ "${VIOLET_DEBUG:-false}" == "true" || "${DEBUG:-false}" == "true" ]]; then
+  DEBUG_ARGS=(--debug)
+fi
+
+run_violet() {
+  if [[ "${#DEBUG_ARGS[@]}" -gt 0 ]]; then
+    "${VIOLET}" "$1" "${DEBUG_ARGS[@]}" "${@:2}"
+  else
+    "${VIOLET}" "$@"
+  fi
+}
+
+CREATE_ARGS=(
+  create
+  "${OUTPUT_DIR}"
+  --default-catalog-source=platform
+  --artifact="${ARTIFACT}"
+)
+
+if [[ "${SKIP_PACKAGE_IMAGES}" == "true" ]]; then
+  CREATE_ARGS+=(--skip-package-images)
+fi
+
+if [[ "${PACKAGE_PLATFORMS}" == "dual" ]]; then
+  CREATE_ARGS+=(--platforms=linux/amd64 --platforms=linux/arm64)
+else
+  IFS=',' read -r -a platform_list <<< "${PACKAGE_PLATFORMS}"
+  for platform in "${platform_list[@]}"; do
+    if [[ -n "${platform}" ]]; then
+      CREATE_ARGS+=(--platforms="${platform}")
+    fi
+  done
+fi
+
+run_violet create "${OUTPUT_DIR}" "${CREATE_ARGS[@]:2}"
+run_violet package "${OUTPUT_DIR}" --no-auth --output="${OUTPUT_FILE}"
+run_violet push \
+  --force \
+  --clusters="${CLUSTERS}" \
+  --platform-address="${PLATFORM_ADDRESS}" \
+  --platform-username="${PLATFORM_USERNAME}" \
+  --platform-password="${PLATFORM_PASSWORD}" \
+  "${OUTPUT_FILE}"
+
+log "package=${OUTPUT_FILE}"
+log "result=success"

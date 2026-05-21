@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sync Bundle"
+  short_description: "Sync bundles to platform catalog"
+  default_prompt: "Use $sync-bundle to sync this operator bundle image into the target platform catalog."
