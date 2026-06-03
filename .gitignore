@@ -1,1 +1,6 @@
 .omx/
+
+# node-ssh-bootstrap: 每环境的真实参数(SSH_HOST/KUBECTL/...)只在本地,
+# env.example 入库做模板
+node-ssh-bootstrap/env.*
+!node-ssh-bootstrap/env.example
