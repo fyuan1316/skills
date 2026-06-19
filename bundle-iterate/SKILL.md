@@ -106,17 +106,27 @@ Run the helper that wraps the harbor-authenticated create+package:
 ```bash
 bash scripts/devpod-package.sh \
   --artifact build-harbor.alauda.cn/mlops/infernex/infernex-bridge-bundle:<TAG> \
-  --output /tmp/inbridge.tgz
+  --output /tmp/inbridge.tgz \
+  --platforms linux/arm64
 ```
 
 The script reads `envs/env.harbor` for `USER`/`PSSSWORD` and runs:
 ```
 violet create <out-dir> --default-catalog-source=platform \
   --artifact=<ART> --username=<U> --password=<P> \
-  --platforms=linux/amd64,linux/arm64
+  --platforms=<PLATFORMS>
 violet package <out-dir> --username=<U> --password=<P> \
   --output=<tgz>
 ```
+
+**Packaging rule — infernex-bridge is arm64-only** (the script default is generic
+`linux/amd64,linux/arm64`; this rule is per-project, NOT a global default). kubeos2 /
+Ascend is arm64, so for infernex-bridge **pass `--platforms linux/arm64` explicitly** —
+amd64 is pure dead weight in the air-gap tgz: a full infernex-bridge bundle measures
+**~3.5G amd64+arm64 vs ~2.4G arm64-only** (−1.1G). The 2.4G is then dominated by two
+heavy ML images — `hermes-router-tokenizer` (~1.2G, arm64-only) + `hermes-router-prediction`
+(~0.57G) = ~76% of the package; the rest of the `relatedImages` are small. Can't trim
+further without changing the bundle's `relatedImages` set. (Measured 2026-06-12 on `…alauda.3`.)
 
 Note: do **not** pass `--no-auth` to `violet package` when source images require auth (build-harbor does).
 

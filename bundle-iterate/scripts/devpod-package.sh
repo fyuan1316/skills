@@ -9,6 +9,8 @@
 # Defaults:
 #   --output: /tmp/$(basename artifact-name)-$(timestamp).tgz
 #   --platforms: linux/amd64,linux/arm64
+#     Per-project: pass --platforms to match the target cluster's arch(es).
+#     (e.g. infernex-bridge → kubeos2/Ascend is arm64-only: --platforms linux/arm64)
 
 set -euo pipefail
 
@@ -17,7 +19,7 @@ usage() {
 usage: devpod-package.sh --artifact <bundle-image-ref> [--output <tgz>] [--platforms <list>]
   --artifact      bundle image reference, e.g. build-harbor.alauda.cn/mlops/infernex/infernex-bridge-bundle:vX
   --output        path to write packaged tgz (default: /tmp/<basename>-<ts>.tgz)
-  --platforms     comma-separated platforms (default: linux/amd64,linux/arm64)
+  --platforms     comma-separated platforms (default: linux/amd64,linux/arm64; match the target cluster's arch)
 
 Reads envs/env.harbor for build-harbor pull credentials (USER + PSSSWORD).
 USAGE
@@ -60,7 +62,9 @@ fi
 # shellcheck disable=SC1090
 set -a; source "$ENV_HARBOR"; set +a
 : "${USER:?env.harbor missing USER}"
-: "${PSSSWORD:?env.harbor missing PSSSWORD}"
+# Accept the corrected PASSWORD spelling, with the historical PSSSWORD typo as fallback.
+PSSSWORD="${PASSWORD:-${PSSSWORD:-}}"
+: "${PSSSWORD:?env.harbor missing PASSWORD}"
 
 VIOLET="${VIOLET:-/tmp/violet}"
 if [[ ! -x "$VIOLET" ]]; then
