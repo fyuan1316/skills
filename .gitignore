@@ -4,3 +4,6 @@
 # env.example 入库做模板
 node-ssh-bootstrap/env.*
 !node-ssh-bootstrap/env.example
+
+# 各机本地密文目录(token/kubeconfig);绝不入库
+envs/

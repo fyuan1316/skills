@@ -1,0 +1,132 @@
+# agent-envs/registry.yaml — single machine-readable index of every environment.
+#
+# AGENTS (Claude / Codex): read THIS FILE FIRST to resolve any environment.
+#   1. Resolve a target by its id below, or by matching `projects:` rules to cwd/git-remote.
+#   2. Each entry tells you: what it is, how to REACH it, which CREDENTIAL file to load
+#      (a `creds:` path under envs/), and which skill/script consumes it.
+#   3. This file is NON-SECRET and git-tracked → it syncs to Mac/Codex.
+#      Secrets live ONLY in the gitignored `envs/` tree. NEVER copy a token/kubeconfig body
+#      into this file, and NEVER echo a secret read from a creds path into chat/logs/args.
+#
+# Two directories, one boundary:
+#   envs/       = secret fills (gitignored, skill-coupled raw credential files)  ← do not restructure
+#   agent-envs/  = this index + docs (git-tracked, agent-facing)                   ← add/curate here
+#
+# Planes:
+#   services/  code & artifact plane  — token-based API services + registries
+#   clusters/  control plane          — ACP clusters via kubeconfig (proxy/direct contexts)
+#   hosts/     data plane & jumps     — SSH-reachable bare hosts (NPU RoCE, P100 CUDA, gateways)
+
+meta:
+  home: fyuan1316/skills (agent-envs/)   # this index lives INSIDE the skills repo → one clone = registry + skills + AGENTS.md
+  secret_store: envs/          # gitignored; raw credential files live at the AGENT ROOT (cwd / $WORKSPACE), a sibling of the clone — NOT inside agent-envs/
+  index_home: agent-envs/       # this dir; non-secret, syncs to Mac/Codex
+  rule: index references envs/ paths (root-relative); it never duplicates their contents. secret ≠ index.
+
+# ────────────────────────── code / artifact plane ──────────────────────────
+services:
+  gitlab:
+    what: gitlab-ce.alauda.cn REST/git API
+    creds: envs/env.gitlab            # GITLAB_TOKEN — yuanfang, Developer (NOT admin)
+    used_by: [git, glab, curl, "hami-dev:label.sh"]
+    note: admin token is separate (memory ref-alauda-gitlab-admin-token); don't override global $GITLAB_TOKEN.
+  github:
+    what: github.com REST/git API
+    creds: envs/env.github            # GITHUB_TOKEN
+  jira:
+    what: jira.alauda.cn REST API v2 (Jira Server/DC) — roadmap 对标取证、ticket/filter 读取
+    creds: envs/env.jira              # USER + PASSWORD (basic auth, yuanfang)
+    helper: 'curl -u "$USER:$PASSWORD" "https://jira.alauda.cn/rest/api/2/search?jql=filter%3D<id>&fields=summary,status,issuetype,labels"'
+    note: reachable from devpod; basic auth (not Bearer/PAT). 只读对标用途。
+  gitcode:
+    what: gitcode.com REST API (openFuyao mirror — issues / PR)
+    creds: envs/env.gitcode           # TOKEN
+    helper: "envs/gitcode-issue.sh <owner> <repo> <title> [body]"
+  harbor:
+    what: build-harbor.alauda.cn image pull
+    creds: envs/env.harbor            # USER, PSSSWORD  (sic — 3×S, do not rename)
+    used_by: ["bundle-iterate:devpod-package.sh"]
+  edge:
+    what: Alauda Edge / Katanomi BuildRun API — builds plugin bundles (Tekton)
+    platform: https://edge.alauda.cn
+    creds: envs/env.edge              # TOKEN (Bearer), namespace=aml-dev, cluster=business-build
+    used_by: [katanomi-buildrun, bundle-iterate]
+    note: namespace=aml-dev is the Tekton BUILD ns, not the InferNex install ns.
+
+# ───────────────────────────── control plane ──────────────────────────────
+# All clusters expose two kubeconfig contexts: proxy-connect (ACP ALB) / direct-connect (apiserver).
+clusters:
+  g1-c1-x86:
+    what: ACP cluster hosting the P100 NVIDIA GPU node; HAMi deployed
+    kubeconfig: envs/kubeconfig/p100-x86.yaml
+    doc: envs/kubeconfig/p100-x86.md
+    reach: devpod direct (both contexts)
+    contexts:
+      proxy-connect:  https://192.168.142.163/kubernetes/g1-c1-x86
+      direct-connect: https://192.168.140.27:6443
+    used_by: [hami-dev]               # accelerator-test ginkgo smoke runs from devpod
+  g1-c2-arm:
+    what: ACP ARM cluster; in-cluster registry is READ-ONLY (violet push --skip-push)
+    kubeconfig: envs/kubeconfig/g1-c2-arm.yaml
+    platform_creds: envs/192.168.142.163   # legacy filename = ALB IP; holds PLATFORM_USER/PASSWORD + violet recipe
+    reach: devpod direct (npuserver CANNOT reach this one)
+    cluster_registry: "152-231-registry.alauda.cn:60070"   # read-only, images preloaded
+    used_by: [bundle-iterate, "infernex-bridge bundle relatedImages"]
+  kubeos:
+    what: NPU Ascend 310P KubeOS/arm64 cluster on platform 142.163 — KServe + npu-operator base (NOT kubeos2!)
+    platform: https://192.168.142.163                      # platform-registered name = "kubeos" (Imported)
+    platform_creds: envs/192.168.142.163                   # shared 142.163 platform creds (admin@cpaas.io); works for all its clusters
+    node_ssh_creds: envs/env.kubeos                        # root pw f8yNWo for the 3 nodes (NB: line-4 key typo "passowrd")
+    reach: "devpod → jumper → root@<node> (nested ssh, sshpass); platform 142.163:443 reachable from devpod directly"
+    via_host: jumper
+    nodes:                                                  # all KubeOS v1 / aarch64 / k8s v1.33.7
+      - "192.168.138.209  ai-jcwang-s4461-2   control-plane"
+      - "192.168.140.2    ai-jcwang-s4461-3   control-plane"
+      - "192.168.142.188  localhost.localdomain control-plane,worker — holds the NPU"
+    npu: "Ascend 310P (servertype Ascend310P-8, chip 310P3); only huawei.com/Ascend310P:1 exposed; no RoCE IP"
+    cluster_registry: "152-231-registry.alauda.cn:60070"   # read-only shared (same as g1-c2-arm) → violet push --skip-push
+    access: "ssh -F envs/env.jumper jumper 'sshpass -p f8yNWo ssh root@192.168.138.209 KUBECONFIG=/etc/kubernetes/admin.conf kubectl ...'"
+    used_by: [bundle-iterate]
+    note: HAMi v2.8.3 (arm64) pushed to catalog via violet --clusters=kubeos on 2026-06-18. NOT the 910B4 kubeos2.
+  kubeos2:
+    what: NPU 910B4 KubeOS cluster — InferNex-Bridge × KServe FIT e2e MAIN target
+    kubeconfig: envs/npuserver/kubeos2-kubeconfig.yaml
+    reach: NOT directly reachable from devpod — jump via host `npuserver`
+    via_host: npuserver
+    access: "ssh npuserver kos2 <kubectl-args>"            # kos2 = kubectl --context=direct-connect
+    used_by: [bundle-iterate, "infernex-bridge e2e (FIT_*)"]
+  business-1:
+    what: ACP cluster (business-1)
+    kubeconfig: envs/192.168.128.78/kubeconfig.yaml         # legacy filename = ALB IP
+    reach: devpod direct
+    contexts:
+      direct-connect: https://192.168.128.125:6443
+
+# ───────────────────────── data plane / jump hosts ────────────────────────
+hosts:
+  jumper:
+    what: QQ jumper — entry hop for nested ssh into restricted networks
+    ssh_config: envs/env.jumper       # Host jumper → 192.168.144.101:52022 (fangyuan)
+  npuserver:
+    what: public-reachable gateway to the kubeos2 cluster; also holds ACP platform admin
+    addr: "119.8.241.33:35710"
+    creds: [envs/npuserver/env.npuserver, envs/npuserver/env.acp]   # root pw + admin@cpaas.io
+    setup: envs/npuserver/setup.sh    # idempotent; rerun after devpod rebuild
+    doc: envs/npuserver/README.md
+    access: "ssh npuserver kos2 ..."  # operates kubeos2; see clusters.kubeos2
+  p100:
+    what: Tesla P100 GPU host — HAMi-core CUDA functional test (Tier3)
+    addr: 192.168.138.15
+    reach: "devpod → jumper → root@192.168.138.15 (nested ssh)"
+    creds_ref: memory:ref-p100-gpu-access     # ssh path lives in memory, not a file here
+    note: also a node inside cluster g1-c1-x86 — use that kubeconfig for K8s-level work.
+
+# ─────────────────────────── cwd / git-remote match ───────────────────────
+# OPTIONAL auto-resolution: when a repo maps to a default environment, declare it here so an
+# agent can pick the right target from cwd/git-remote without asking. Extend as stable mappings appear.
+projects: {}
+  # example shape (fill when confirmed):
+  # aml-artifacts:
+  #   match: { git_remote: "git@gitlab-ce.alauda.cn:aml/artifacts.git" }
+  #   build_via: edge            # -> services.edge
+  #   deploy_to: g1-c2-arm       # -> clusters.g1-c2-arm
