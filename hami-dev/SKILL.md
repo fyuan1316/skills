@@ -140,7 +140,7 @@ loads and instruments the process against the physical GPU.
 
 Runs **from devpod** against the P100's cluster (devpod reaches the API + has Go;
 the cluster `g1-c1-x86` already runs hami-scheduler + hami-device-plugin, so no
-deploy step). Kubeconfig: `envs/kubeconfig/p100-x86.yaml` (single source).
+deploy step). Kubeconfig: `envs/kubeconfig/g1-c1-x86.yaml` (single source).
 
 ```bash
 scripts/run.sh e2e            # = e2e-test-smoke, E2E_PLATFORM=hami
@@ -148,7 +148,7 @@ scripts/run.sh e2e sanity     # smoke || sanity
 scripts/run.sh e2e full       # everything applicable
 ```
 The driver installs ginkgo (pinned to the repo's go.mod) on first use, then runs
-`make e2e-test-<type>` with `KUBE_CONF=envs/kubeconfig/p100-x86.yaml`,
+`make e2e-test-<type>` with `KUBE_CONF=envs/kubeconfig/g1-c1-x86.yaml`,
 `E2E_PLATFORM=hami`, `E2E_IMAGE_REGISTRY=docker-mirrors.alauda.cn` (internal
 mirror so nodes can pull the CUDA test image), `E2E_GOPROXY=goproxy.cn`. The
 suite auto-detects platform (hami/pgpu/pnpu) and skips inapplicable cases.

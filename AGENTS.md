@@ -50,7 +50,8 @@ registry 三个面:`services:`(token API)/ `clusters:`(kubeconfig 双 context)/ 
 | `env.edge` | TOKEN(Bearer) | VPN |
 | `env.jumper` | ssh_config:Host jumper→192.168.144.101:52022 | VPN |
 | `npuserver/`(env.npuserver/env.acp/kos2/kubeos2-kubeconfig.yaml/setup.sh) | npuserver 公网网关 + kubeos2 | ✅(装 key 后 `ssh npuserver kos2 ...`) |
-| `kubeconfig/*.yaml`、`192.168.142.163`、`192.168.128.78/` | 内网集群 kubeconfig + 平台凭据 | VPN |
+| `kubeconfig/<cluster-id>.yaml`(g1-c1-x86 / g1-c2-arm / business-1 …) | 内网集群 kubeconfig | VPN |
+| `platforms/<platform-host>.env`(如 192.168.142.163.env) | ACP 平台账号(PLATFORM_USER/PASSWORD) | VPN |
 | `env.kubeos` | kubeos 节点 root 口令 | VPN(经 jumper) |
 
 ### Mac 直连可达性一览

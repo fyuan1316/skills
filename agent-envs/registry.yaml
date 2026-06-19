@@ -22,6 +22,9 @@ meta:
   secret_store: envs/          # gitignored; raw credential files live at the AGENT ROOT (cwd / $WORKSPACE), a sibling of the clone — NOT inside agent-envs/
   index_home: agent-envs/       # this dir; non-secret, syncs to Mac/Codex
   rule: index references envs/ paths (root-relative); it never duplicates their contents. secret ≠ index.
+  path_resolution: "envs/... resolves against AGENT_ROOT = the dir holding BOTH skills/ and envs/ (= cwd / $WORKSPACE on devpod; <tools>/ on Mac) — NOT relative to this file (it sits 2 levels deep at skills/agent-envs/). Keep a `skills/envs -> ../envs` symlink so it also resolves from inside the clone."
+  layout: "envs/kubeconfig/<cluster-id>.yaml (filename = cluster id) | envs/platforms/<platform-host>.env (platform creds) | envs/<service>.env (token services). Clusters without a standalone kubeconfig (SSH-wrapper access) carry via_host:/access: instead of kubeconfig:."
+  local_context_naming: "<cluster-id>:<proxy|direct> — derive from cluster id + which contexts: exist; don't restate per-cluster. Import into ~/.kube/config with backup; envs/kubeconfig/*.yaml stays pristine."
 
 # ────────────────────────── code / artifact plane ──────────────────────────
 services:
@@ -58,8 +61,8 @@ services:
 clusters:
   g1-c1-x86:
     what: ACP cluster hosting the P100 NVIDIA GPU node; HAMi deployed
-    kubeconfig: envs/kubeconfig/p100-x86.yaml
-    doc: envs/kubeconfig/p100-x86.md
+    kubeconfig: envs/kubeconfig/g1-c1-x86.yaml
+    doc: envs/kubeconfig/g1-c1-x86.md
     reach: devpod direct (both contexts)
     contexts:
       proxy-connect:  https://192.168.142.163/kubernetes/g1-c1-x86
@@ -68,14 +71,14 @@ clusters:
   g1-c2-arm:
     what: ACP ARM cluster; in-cluster registry is READ-ONLY (violet push --skip-push)
     kubeconfig: envs/kubeconfig/g1-c2-arm.yaml
-    platform_creds: envs/192.168.142.163   # legacy filename = ALB IP; holds PLATFORM_USER/PASSWORD + violet recipe
+    platform_creds: envs/platforms/192.168.142.163.env   # holds PLATFORM_USER/PASSWORD + violet recipe
     reach: devpod direct (npuserver CANNOT reach this one)
     cluster_registry: "152-231-registry.alauda.cn:60070"   # read-only, images preloaded
     used_by: [bundle-iterate, "infernex-bridge bundle relatedImages"]
   kubeos:
     what: NPU Ascend 310P KubeOS/arm64 cluster on platform 142.163 — KServe + npu-operator base (NOT kubeos2!)
     platform: https://192.168.142.163                      # platform-registered name = "kubeos" (Imported)
-    platform_creds: envs/192.168.142.163                   # shared 142.163 platform creds (admin@cpaas.io); works for all its clusters
+    platform_creds: envs/platforms/192.168.142.163.env     # shared 142.163 platform creds (admin@cpaas.io); works for all its clusters
     node_ssh_creds: envs/env.kubeos                        # root pw f8yNWo for the 3 nodes (NB: line-4 key typo "passowrd")
     reach: "devpod → jumper → root@<node> (nested ssh, sshpass); platform 142.163:443 reachable from devpod directly"
     via_host: jumper
@@ -94,10 +97,11 @@ clusters:
     reach: NOT directly reachable from devpod — jump via host `npuserver`
     via_host: npuserver
     access: "ssh npuserver kos2 <kubectl-args>"            # kos2 = kubectl --context=direct-connect
+    local_import: "direct only, and ONLY via an npuserver tunnel — a plain local context won't reach it"
     used_by: [bundle-iterate, "infernex-bridge e2e (FIT_*)"]
   business-1:
     what: ACP cluster (business-1)
-    kubeconfig: envs/192.168.128.78/kubeconfig.yaml         # legacy filename = ALB IP
+    kubeconfig: envs/kubeconfig/business-1.yaml
     reach: devpod direct
     contexts:
       direct-connect: https://192.168.128.125:6443

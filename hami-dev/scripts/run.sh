@@ -70,7 +70,7 @@ if [ "$REPO" = "accelerator-test" ]; then
   cd "$AI_INFRA/accelerator-test"
   exec make "e2e-test-$etype" \
     E2E_PLATFORM="${E2E_PLATFORM:-hami}" \
-    KUBE_CONF="${KUBE_CONF:-/workspaces/yuanfang-base-ubuntu/envs/kubeconfig/p100-x86.yaml}" \
+    KUBE_CONF="${KUBE_CONF:-${WORKSPACE:-/workspaces/yuanfang-base-ubuntu}/envs/kubeconfig/g1-c1-x86.yaml}" \
     E2E_IMAGE_REGISTRY="${E2E_IMAGE_REGISTRY:-docker-mirrors.alauda.cn}" \
     E2E_GOPROXY="${E2E_GOPROXY:-https://goproxy.cn,direct}" \
     GINKGO_BIN="$TOOLROOT/gopath/bin/ginkgo"

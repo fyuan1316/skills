@@ -74,7 +74,7 @@ scripts/p100.sh 'nvidia-smi -L'
    - `core.sh gpu-matrix`:6 设备显存(含 OOM)+ 6 host/锁页(不计设备限额)+ 2 SM 算力,全绿@P100。
    - `core.sh framework`(✅ 皇冠用例):真 PyTorch 工作负载(P100 缓存的 torch-distributed:v2.9.1 镜像)+ LD_PRELOAD libvgpu + 限额 2g:4GiB 张量被 OOM(PyTorch 报总容量=2GB)、1GiB 成功。即真 ML 框架受 vGPU 显存限制约束——产品核心价值端到端验证。
    - dcgm-exporter:build ✅ devpod,13/16 单测包纯逻辑通过;**3 个需 libdcgm/NVML 的包在 P100 跑通 3/3**(`run.sh dcgm-exporter gputest`:编译@devpod→送 P100→nvmlprovider 用 ubuntu:22.04、transformation/cmd 用 dcgm 镜像,均 --gpus;按退出码判定;注 glibc≥22.04)。
-2. ~~accelerator-test smoke~~ ✅ 已通(`run.sh e2e smoke`,从 devpod 直连集群跑 Ginkgo,HAMi vGPU 显存隔离 spec `1 Passed`;kubeconfig=envs/kubeconfig/p100-x86.yaml)。可扩展:sanity/full、pgpu/pnpu 平台。
+2. ~~accelerator-test smoke~~ ✅ 已通(`run.sh e2e smoke`,从 devpod 直连集群跑 Ginkgo,HAMi vGPU 显存隔离 spec `1 Passed`;kubeconfig=envs/kubeconfig/g1-c1-x86.yaml)。可扩展:sanity/full、pgpu/pnpu 平台。
 3. ~~Tier 2 提交前 gate~~ ✅ 已通(`run.sh hami lint` = go vet + golangci-lint v2.8.0,对齐仓库 .golangci.yaml;任一报错即 gate,已验证抓 misspell + 干净通过)。
 4. 拿到可写 harbor robot 后,`core.sh` 增加 `crane push build-harbor.alauda.cn/test/...` 分支(替代 tar 分发)。
 
