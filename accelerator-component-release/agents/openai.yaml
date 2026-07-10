@@ -1,0 +1,4 @@
+interface:
+  display_name: "Accelerator Component Release"
+  short_description: "Source-first release orchestration"
+  default_prompt: "Use the accelerator-component-release skill to plan or drive an Alauda accelerator component release from source branch to audit-ready materials."
