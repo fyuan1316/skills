@@ -1,0 +1,4 @@
+interface:
+  display_name: "Remote Trivy Scan"
+  short_description: "Remote release-grade Trivy scans"
+  default_prompt: "Use remote-trivy-scan to run release-grade Trivy image scans on a remote scanner with proxy, collect reports, and produce security gate evidence."

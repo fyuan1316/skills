@@ -1,0 +1,4 @@
+interface:
+  display_name: "Edge BuildRun Ops"
+  short_description: "Edge BuildRun release operations"
+  default_prompt: "Use edge-buildrun-ops to query, trigger, wait for, and collect evidence from Alauda Edge/Katanomi BuildRuns for release workflows."

@@ -32,12 +32,13 @@ Delegate instead of reimplementing:
 
 | Work | Preferred owner |
 |---|---|
-| Edge BuildRun query/trigger | `hyperflux-pipeline-ops` or project build skill |
-| package-minio/package digest discovery | artifact discovery adapter |
+| Edge BuildRun query/trigger | `edge-buildrun-ops` |
+| package-minio/package digest discovery | `package-artifact-discovery` |
 | OLM/package rollout | `edge-plugin-package-rollout` or `sync-bundle` |
 | GPU/NPU/HAMi e2e | `accelerator-compatibility-test` |
 | HAMi/device-plugin debugging | `hami-debug-workflow` |
-| image CVE scan/fix | security scan skill or `baseimage-cve-fix` |
+| release-grade image CVE scan | `remote-trivy-scan` |
+| image CVE fix | `baseimage-cve-fix` |
 | release material audit | `plugin-release-review` local scan plus manual gate review |
 | product docs update | docs/product documentation skill or direct docs repo workflow |
 

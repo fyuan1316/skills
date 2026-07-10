@@ -1,0 +1,4 @@
+interface:
+  display_name: "Package Artifact Discovery"
+  short_description: "Package and image artifact discovery"
+  default_prompt: "Use package-artifact-discovery to find package-minio artifacts, checksums, image refs, digests, and formal package evidence for release gates."
