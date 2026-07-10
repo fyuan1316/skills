@@ -26,6 +26,9 @@ Use the accelerator-test design docs as the detailed reference when needed:
 
 For the completed ADP v1.3.0 lessons, read `references/adp-v130-lessons.md`.
 
+When starting a new component release, read `references/next-release-readiness.md`
+before the first runner pass.
+
 ## Specialist Boundaries
 
 Delegate instead of reimplementing:
@@ -43,6 +46,36 @@ Delegate instead of reimplementing:
 | product docs update | docs/product documentation skill or direct docs repo workflow |
 
 The orchestrator records what each specialist produced as facts and evidence paths. It should not hide specialist failures or silently mark gaps closed.
+
+## Action Result Contract
+
+Specialist skills must return machine-readable action results before profile
+facts are updated. Prefer this shape:
+
+```json
+{
+  "actionId": "action.rc-build-or-discover",
+  "status": "succeeded",
+  "summary": {
+    "producedFacts": ["build.rc.discovery.attempted"],
+    "evidencePaths": ["run/actions/action.rc-build-or-discover/buildrun.json"]
+  }
+}
+```
+
+For compatibility, legacy results with `action.id` are accepted, but new
+specialist outputs should use top-level `actionId`.
+
+Before applying any specialist output, validate it:
+
+```bash
+python3 /Users/yuan/.codex/skills/accelerator-component-release/scripts/validate-action-result.py \
+  --profile <profile.yaml> \
+  <action-result.json>
+```
+
+Only apply facts listed in `summary.producedFacts`. Do not manually mark gaps
+closed from chat memory; let the next runner pass derive gap status from facts.
 
 ## Mandatory Gates
 

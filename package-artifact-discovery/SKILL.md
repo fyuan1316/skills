@@ -110,6 +110,13 @@ Write action result JSON:
 }
 ```
 
+The result should pass:
+
+```bash
+python3 /Users/yuan/.codex/skills/accelerator-component-release/scripts/validate-action-result.py \
+  --strict --profile <profile.yaml> <action-result.json>
+```
+
 ## Safety
 
 - Never print Harbor, S3, or package credentials.

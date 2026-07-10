@@ -114,6 +114,13 @@ Write action result JSON:
 }
 ```
 
+The result should pass:
+
+```bash
+python3 /Users/yuan/.codex/skills/accelerator-component-release/scripts/validate-action-result.py \
+  --strict --profile <profile.yaml> <action-result.json>
+```
+
 If Critical/High is nonzero, set status to failed or warning and produce only scan-completed/report facts. Route to CVE fix.
 
 ## Safety

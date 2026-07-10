@@ -135,6 +135,13 @@ Write an action result JSON in the run directory:
 }
 ```
 
+The result should pass:
+
+```bash
+python3 /Users/yuan/.codex/skills/accelerator-component-release/scripts/validate-action-result.py \
+  --strict --profile <profile.yaml> <action-result.json>
+```
+
 Use only facts supported by evidence. Do not produce `artifact.*.package.exists` or `image.*.digests.recorded` unless package and digest data were actually discovered or verified.
 
 ## Safety
