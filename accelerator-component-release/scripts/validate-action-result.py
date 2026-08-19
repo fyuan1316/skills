@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import shutil
 import sys
 from pathlib import Path
 
@@ -42,7 +44,34 @@ def load_json(path: Path):
 
 def load_profile(path: Path):
     if yaml is None:
-        raise SystemExit("PyYAML is required for --profile validation")
+        uv = shutil.which("uv")
+        if uv and os.environ.get("ACCELERATOR_RELEASE_PYYAML_BOOTSTRAPPED") != "1":
+            env = os.environ.copy()
+            env["ACCELERATOR_RELEASE_PYYAML_BOOTSTRAPPED"] = "1"
+            package_index = env.get(
+                "ACCELERATOR_RELEASE_PYPI_INDEX",
+                "https://pypi.tuna.tsinghua.edu.cn/simple",
+            )
+            os.execve(
+                uv,
+                [
+                    uv,
+                    "run",
+                    "--quiet",
+                    "--isolated",
+                    "--with",
+                    "PyYAML",
+                    "--default-index",
+                    package_index,
+                    "python",
+                    str(Path(__file__).resolve()),
+                    *sys.argv[1:],
+                ],
+                env,
+            )
+        raise SystemExit(
+            "PyYAML is required for --profile validation; install uv to enable automatic bootstrap"
+        )
     try:
         return yaml.safe_load(path.read_text(encoding="utf-8"))
     except Exception as exc:  # noqa: BLE001

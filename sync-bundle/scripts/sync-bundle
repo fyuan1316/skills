@@ -156,8 +156,8 @@ rewrite_artifact_if_needed() {
   printf '%s\n' "${artifact}"
 }
 
-if [[ -z "${PLATFORM_USERNAME:-}" || -z "${PLATFORM_PASSWORD:-}" ]]; then
-  echo "PLATFORM_USERNAME and PLATFORM_PASSWORD are required; configure them in ${DEFAULT_CONFIG}" >&2
+if [[ -z "${PLATFORM_TOKEN:-}" && ( -z "${PLATFORM_USERNAME:-}" || -z "${PLATFORM_PASSWORD:-}" ) ]]; then
+  echo "PLATFORM_TOKEN or PLATFORM_USERNAME and PLATFORM_PASSWORD are required; configure them in ${DEFAULT_CONFIG}" >&2
   exit 1
 fi
 
@@ -205,6 +205,13 @@ CREATE_ARGS=(
   --artifact="${ARTIFACT}"
 )
 
+if [[ -n "${ARTIFACT_USERNAME:-}" ]]; then
+  CREATE_ARGS+=(--username="${ARTIFACT_USERNAME}")
+fi
+if [[ -n "${ARTIFACT_PASSWORD:-}" ]]; then
+  CREATE_ARGS+=(--password="${ARTIFACT_PASSWORD}")
+fi
+
 if [[ "${SKIP_PACKAGE_IMAGES}" == "true" ]]; then
   CREATE_ARGS+=(--skip-package-images)
 fi
@@ -222,12 +229,21 @@ fi
 
 run_violet create "${OUTPUT_DIR}" "${CREATE_ARGS[@]:2}"
 run_violet package "${OUTPUT_DIR}" --no-auth --output="${OUTPUT_FILE}"
+PUSH_AUTH_ARGS=()
+if [[ -n "${PLATFORM_TOKEN:-}" ]]; then
+  PUSH_AUTH_ARGS+=(--platform-token="${PLATFORM_TOKEN}")
+else
+  PUSH_AUTH_ARGS+=(
+    --platform-username="${PLATFORM_USERNAME}"
+    --platform-password="${PLATFORM_PASSWORD}"
+  )
+fi
+
 run_violet push \
   --force \
   --clusters="${CLUSTERS}" \
   --platform-address="${PLATFORM_ADDRESS}" \
-  --platform-username="${PLATFORM_USERNAME}" \
-  --platform-password="${PLATFORM_PASSWORD}" \
+  "${PUSH_AUTH_ARGS[@]}" \
   "${OUTPUT_FILE}"
 
 log "package=${OUTPUT_FILE}"

@@ -28,6 +28,7 @@ hack/hami-ascend-device-plugin-release-env-window.sh <kubeconfig> -- \
 ## Artifacts Repo
 
 - For components that build their own operator package, `aml/artifacts` is registration-only, not the package builder.
+- AC upload requires a packaged plugin/install artifact URL, but `artifacts-plugin` is only a fallback build path. Skip `artifacts-plugin` when the component pipeline already produced the formal plugin package; run it only for components that produced chart/image metadata but no plugin package.
 - Still require both:
   - `master`: latest component registration
   - `<component>-<version>`: historical release branch registration

@@ -1,0 +1,4 @@
+interface:
+  display_name: "ACP Baseline K8s"
+  short_description: "Query ACP baseline Kubernetes versions"
+  default_prompt: "Use $acp-baseline-k8s to find the supported Kubernetes versions for ACP 4.4."

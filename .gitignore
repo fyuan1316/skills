@@ -7,3 +7,7 @@ node-ssh-bootstrap/env.*
 
 # 各机本地密文目录(token/kubeconfig);绝不入库
 envs/
+
+# Python bytecode generated while running skill helper scripts.
+__pycache__/
+*.py[cod]

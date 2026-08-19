@@ -1,0 +1,8 @@
+team_key: "team-key"
+jira_project: "PROJECT"
+sub_teams:
+  - name: "Sub Team A"
+    jira_labels:
+      - "Sub Team A"
+    lane_label_prefix: "sub-team-a"
+    people: {}

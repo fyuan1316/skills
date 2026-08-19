@@ -1,0 +1,6 @@
+interface:
+  display_name: "Accelerator Compatibility Test"
+  short_description: "Run HAMi/PGPU/pNPU GPU and NPU e2e."
+  default_prompt: "Use $accelerator-compatibility-test to run HAMi GPU/NPU compatibility e2e and collect artifacts."
+policy:
+  allow_implicit_invocation: true

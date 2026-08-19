@@ -1,0 +1,4 @@
+interface:
+  display_name: "Edge Plugin Package Rollout"
+  short_description: "Roll out Edge-built plugin packages to ACP"
+  default_prompt: "Use $edge-plugin-package-rollout to verify an Edge-built npu-operator package on dev kubeos."

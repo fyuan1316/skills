@@ -1,0 +1,12 @@
+version: "x.y"
+status: planning
+role: next
+team_profile_file: "../../team-profile.yaml"
+roadmap_file: "roadmap.md"
+changelog_file: "roadmap-changelog.md"
+sprint_start_date: "YYYY-MM-DD"
+code_freeze_date: "YYYY-MM-DD"
+release_target_date: "YYYY-MM-DD"
+jira_snapshot_file: "snapshots/jira-execution-snapshot.yaml"
+gantt_output_file: "snapshots/roadmap-gantt.html"
+progress_gantt_output_file: "snapshots/roadmap-progress-gantt.html"

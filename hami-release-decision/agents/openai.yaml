@@ -1,0 +1,4 @@
+interface:
+  display_name: "HAMi Release Decision"
+  short_description: "Score HAMi upstream release decisions."
+  default_prompt: "Use $hami-release-decision to decide whether a HAMi upstream release should become an Alauda release."

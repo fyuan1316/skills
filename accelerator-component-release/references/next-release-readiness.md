@@ -68,8 +68,40 @@ release still needs:
 - `master` component directory reflecting the latest version
 - `<component>-<version>` branch preserving that release's metadata
 - artifacts directory name aligned with the package-minio package prefix
+- a packaged plugin/install artifact URL before AC upload
 
-AC upload is the last mutating gap. Confirm the exact BuildRun branch and the
+Do not assume `artifacts-plugin` is mandatory. First check whether the component
+pipeline already produced the formal plugin package. If it did, record
+`plugin.package.source.component-pipeline` and the package URL. If it did not,
+use `artifacts-plugin` as the fallback build path from the artifacts release
+branch, then record `plugin.package.source.artifacts-plugin`.
+
+Before triggering `artifacts-plugin`, read
+`plugin-package-and-related-images.md`. Confirm the version branch, parameter
+keys, ACP version list, and expected package-owned image set. If a previous
+release package exists, compare its `manifest.yaml` relatedImages before
+retrying a failed package build.
+
+## Formal Package Smoke
+
+Select the representative smoke environment before the formal package is
+built. After the exact final plugin/install package exists, read
+`formal-package-smoke.md` and require:
+
+- final package URL and checksum verified
+- the exact final package installed through its real delivery path
+- component-owned workloads ready
+- one accelerator workload passed
+- running Pod image IDs matched the formal image digest evidence
+- cleanup result recorded
+- `gate.formal-package-smoke.passed=true`
+
+Do not treat matching RC/formal commits, retag, digest equality, a successful
+packaging BuildRun, or static package inspection as a replacement for this
+smoke. If the smoke environment is unavailable, the release remains blocked.
+
+AC upload is the last mutating gap and must require
+`gate.formal-package-smoke.passed`. Confirm the exact BuildRun branch and the
 fixed parameter keys before upload:
 
 ```text

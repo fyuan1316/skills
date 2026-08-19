@@ -1,0 +1,496 @@
+/* Roadmap Studio Shared CSS
+   This file is embedded into generated HTML so offline snapshots stay self-contained.
+   Keep layout primitives here to avoid visual drift between team and builders dashboards. */
+
+:root {
+  --rs-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --rs-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  --rs-card-radius: 12px;
+  --rs-card-shadow: 0 1px 3px rgba(0,0,0,.04), 0 1px 2px rgba(0,0,0,.06);
+  --rs-card-shadow-hover: 0 6px 14px rgba(15,23,42,.10);
+}
+
+html {
+  scroll-padding-top: 16px;
+}
+
+body {
+  font-family: var(--rs-font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+
+code,
+.num,
+.sp-label,
+.chip-name,
+.epic-key,
+.kpi code {
+  font-family: var(--rs-font-mono);
+}
+
+.kpis {
+  align-items: stretch;
+}
+
+.kpis > * {
+  min-width: 0;
+  height: 100%;
+}
+
+.kpi-link {
+  display: block;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+  font-family: inherit;
+  font-weight: inherit;
+}
+
+.kpi-link:hover {
+  text-decoration: none;
+}
+
+.kpi {
+  height: 100%;
+  min-height: 148px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  border-radius: var(--rs-card-radius);
+  box-shadow: var(--rs-card-shadow);
+}
+
+.kpi-clickable {
+  cursor: pointer;
+}
+
+.kpi-link:hover .kpi,
+.kpi-clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--rs-card-shadow-hover);
+  border-color: #93c5fd;
+}
+
+.kpi-label {
+  line-height: 1.2;
+}
+
+.kpi-value {
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi-sub {
+  min-height: 38px;
+}
+
+.kpi-bar,
+.progress-bar {
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+.panel,
+.timeline-panel,
+.warning-panel,
+.team-switcher,
+.domain-section,
+.small-section,
+.cross-section,
+.small-features-section,
+.rm-card,
+.team-card,
+.roadmap-row,
+.small-card,
+.cross-card {
+  border-radius: var(--rs-card-radius);
+}
+
+.team-filter,
+.small-filter,
+.rm-action,
+.button {
+  font-family: inherit;
+}
+
+.epic-block {
+  border-top: 1px solid var(--border, #e5e7eb);
+}
+
+.epic-block .epic-row {
+  border-top: 0;
+}
+
+/* Team-grouped epic blocks inside each Roadmap card.
+   Cross-team groups visually separate from own-team work so a single
+   theme can show "本团队 + 跨团队 ACP + 跨团队 AI" structure at a glance. */
+.team-group {
+  margin-top: 14px;
+  padding: 10px 12px 4px;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 10px;
+  background: #fff;
+}
+.team-group.cross-team {
+  background: #fef9f3;
+  border-color: #fbd9a7;
+}
+.team-group .epic-block {
+  border-top: 1px solid #f1f5f9;
+}
+.team-group .epic-block:first-of-type {
+  border-top: 0;
+}
+.team-group-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--muted, #6b7280);
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed #e5e7eb;
+}
+.team-group-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .03em;
+}
+.team-group-pill-own {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+.team-group-pill-cross {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fbbf24;
+}
+.team-group-name {
+  font-weight: 800;
+  color: #111827;
+  font-size: 13px;
+}
+.team-group-count {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Themed Features section: groups ALL small features (own-team and
+   cross-team alike) by initiative / theme (KubeOS / K8s 1.35 / New Web
+   Console / ...) so a theme like "New Web Console" can show its 3 own-team
+   migration Epics + 1 cross-team compat Epic side by side instead of
+   scattering them across two sections. The cross-team status becomes a
+   per-Epic badge inside the card.
+   .cross-team-features-section is kept as a back-compat alias for any older
+   snapshot HTML / external links still pointing at the previous section. */
+.themed-features-section,
+.cross-team-features-section {
+  background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
+  border: 1px solid #fbbf24;
+  border-radius: 14px;
+  padding: 20px 22px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04);
+  margin: 22px 0;
+}
+.themed-features-section .section-head h2,
+.cross-team-features-section .section-head h2 {
+  color: #92400e;
+}
+
+/* Cross-team badge: signals that an Epic carries the 跨团队需求 label.
+   Used both inside themed-feature initiative cards (next to the team pill)
+   and inside the flat Small Features list. Visually distinct from the
+   team-group pill so a reader can tell at a glance: orange team pill +
+   cross-team badge = "external team AND cross-team coordination". */
+.cross-team-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .03em;
+  white-space: nowrap;
+}
+.cross-team-badge.inline {
+  /* Inline-in-prose variant for taglines / help text. */
+  vertical-align: baseline;
+  margin: 0 2px;
+}
+.initiative-cross-count {
+  color: #92400e;
+  font-weight: 700;
+}
+.initiative-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+}
+.initiative-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 14px 16px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.04);
+}
+.initiative-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+.initiative-head h3 {
+  margin: 0;
+  font-size: 16px;
+}
+.initiative-subtitle {
+  color: #6b7280;
+  font-size: 12px;
+  margin-top: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+}
+.initiative-team {
+  background: #f3f4f6;
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #374151;
+}
+.initiative-stats {
+  text-align: right;
+}
+.initiative-stats b {
+  display: block;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+}
+.initiative-stats span {
+  display: block;
+  color: #6b7280;
+  font-size: 11px;
+  margin-top: 2px;
+}
+.initiative-epics {
+  margin-top: 10px;
+}
+.initiative-epic {
+  padding: 8px 0;
+  border-top: 1px solid #f1f5f9;
+}
+.initiative-epic:first-child {
+  border-top: 0;
+}
+.initiative-epic .epic-row {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 10px;
+  align-items: center;
+}
+
+.task-detail-list {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 12px;
+}
+
+.small-card .task-detail-list {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.task-detail-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, .7fr);
+  gap: 12px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+}
+
+.task-detail-main,
+.task-detail-meta {
+  min-width: 0;
+}
+
+.task-detail-main {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.task-summary {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-type,
+.task-sprint,
+.task-points {
+  flex-shrink: 0;
+  border-radius: 999px;
+  padding: 2px 7px;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.task-type {
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+.task-sprint {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.task-sprint-missing {
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.task-points {
+  background: #f3f4f6;
+  color: #374151;
+  font-variant-numeric: tabular-nums;
+}
+
+.task-detail-meta {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  align-items: center;
+  color: #4b5563;
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+
+.chip-change,
+.plan-change-signal,
+.change-kind,
+.change-missing-label {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.chip-change {
+  margin-left: 6px;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.plan-change-signal {
+  margin-top: 8px;
+  background: #fffbeb;
+  border: 1px solid #f59e0b;
+  color: #92400e;
+}
+
+.lane-chip {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 2px 8px;
+  background: #ecfeff;
+  border: 1px solid #a5f3fc;
+  color: #155e75;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.plan-changes {
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.plan-changes h4 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.plan-change-row {
+  border: 1px solid #fcd34d;
+  border-radius: 9px;
+  background: #fffbeb;
+  padding: 9px 10px;
+}
+
+.change-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+
+.change-kind {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.change-field {
+  color: #374151;
+  font-weight: 800;
+}
+
+.change-missing-label {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.change-meta,
+.change-notes,
+.change-more {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.change-reason {
+  margin-top: 5px;
+  color: #374151;
+  font-size: 12px;
+}
+
+.change-notes {
+  margin-top: 3px;
+}
+
+.change-more {
+  font-weight: 800;
+}
+
+@media (max-width: 1000px) {
+  .kpi {
+    min-height: 132px;
+  }
+
+  .task-detail-row {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .task-detail-meta {
+    justify-content: flex-start;
+  }
+}

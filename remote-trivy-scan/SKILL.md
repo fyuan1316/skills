@@ -36,11 +36,16 @@ Use credentials from `/Volumes/macOS-2/Users/yuan/Dev/tools/envs` only inside co
 
 On the remote host:
 
+- require absolute remote work/cache/report paths; do not source `~/...` paths
+  locally because the local shell may expand them before SSH
 - verify `trivy --version`
+- verify `jq --version`; if `jq` is unavailable, still collect JSON reports and
+  summarize them on the controller host instead of treating the scan as stuck
+- verify free disk space and record the Trivy DB metadata before scanning
 - write `images.txt`
 - write redacted `proxy.env`
 - run one JSON and one table report per image
-- write `scan-progress.log`
+- write `scan-progress.log` with per-image start time, end time, and exit code
 - generate `summary.md`
 
 Recommended report files:
@@ -56,6 +61,11 @@ summary.md
 ```
 
 If SSH password automation is needed, prefer a temporary `SSH_ASKPASS` wrapper or a single-match `expect` script. Do not print passwords. For older OpenSSH servers, use `scp -O` when pulling reports.
+
+Before declaring a timeout or SSH failure, log in with a bounded diagnostic
+command such as `date; hostname; uptime`, then separately check Trivy processes
+and report files. A quiet command with redirected output is not evidence that
+Trivy is still running.
 
 ## Proxy Rules
 
@@ -84,6 +94,10 @@ security.formal.scan.passed
 ```
 
 Do not produce `gate.cve-release-accepted` or `approval.residual-security.accepted`; those require release owner approval.
+
+Count both total finding occurrences and unique CVE IDs. Use occurrences for
+the action-result severity fields, and include unique counts in the human
+summary to avoid hiding duplicate findings across binaries or packages.
 
 ## Output Contract
 

@@ -25,6 +25,7 @@ registry 三个面:`services:`(token API)/ `clusters:`(kubeconfig 双 context)/ 
 | `bundle-iterate` | OLM bundle code→cluster 闭环 | **devpod 主**(violet create/package 靠 devpod 大盘);Mac 仅能做 npuserver→kubeos2 的 install/verify 半程 |
 | `hami-dev` | HAMi 技术栈 build/test | **devpod**(Go 工具链在大临时盘)+ P100(经 jumper,VPN) |
 | `hami-fix` | HAMi 自动化修复编排 | devpod |
+| `hami-release-decision` | HAMi 生态组件是否跟进上游版本的发版 go/no-go 决策 | Mac 可跑;证据脚本只读,真实发布验证再转 hami-dev / accelerator-test |
 | `cluster-image-import` / `sync-bundle` | 镜像导入 / bundle 同步 | 看目标集群可达性(多为 VPN) |
 
 > Codex 触发法:可在 `~/.codex/prompts/<name>.md` 放薄壳("读 `<clone>/<name>/SKILL.md` 并执行"),

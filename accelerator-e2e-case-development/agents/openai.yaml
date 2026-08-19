@@ -1,0 +1,4 @@
+interface:
+  display_name: "Accelerator E2E Case Development"
+  short_description: "Turn release deltas into evidence-backed accelerator E2E cases"
+  default_prompt: "Use $accelerator-e2e-case-development to analyze this release delta and implement the required E2E cases."
